@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="BigQuery Release Notes – stay up to date with the latest Google BigQuery product updates, features, and fixes." />
+  <title>BigQuery Release Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- Background grid decoration -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <!-- ── Header ── -->
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="header-brand">
+          <div class="brand-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" fill="url(#hex-grad)" stroke="url(#hex-stroke)" stroke-width="1"/>
+              <path d="M9 14H19M14 9V19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="hex-grad" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4285F4"/>
+                  <stop offset="1" stop-color="#0052CC"/>
+                </linearGradient>
+                <linearGradient id="hex-stroke" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#6AA3FF"/>
+                  <stop offset="1" stop-color="#4285F4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-product">BigQuery</span>
+            <span class="brand-label">Release Notes</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="entry-count-badge" id="entryCount" aria-live="polite" title="Total release notes loaded"></div>
+          <button id="refreshBtn" class="btn-refresh" aria-label="Refresh release notes">
+            <svg class="btn-icon spin-icon" id="spinnerIcon" viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="28 56" stroke-linecap="round"/>
+            </svg>
+            <svg class="btn-icon static-icon" id="staticIcon" viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+              <path d="M4 12a8 8 0 018-8V2m8 10a8 8 0 01-8 8v2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M4 12a8 8 0 0016 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 4"/>
+            </svg>
+            <span id="refreshLabel">Refresh</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Main ── -->
+    <main class="main-content" id="mainContent">
+      <!-- Loading state -->
+      <div class="state-card" id="loadingState" role="status" aria-label="Loading release notes">
+        <div class="pulse-ring" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <p class="state-title">Fetching latest updates…</p>
+        <p class="state-subtitle">Connecting to Google Cloud</p>
+      </div>
+
+      <!-- Error state -->
+      <div class="state-card hidden" id="errorState" role="alert">
+        <div class="error-icon" aria-hidden="true">⚡</div>
+        <p class="state-title">Failed to load</p>
+        <p class="state-subtitle" id="errorMessage">An unexpected error occurred.</p>
+        <button class="btn-retry" id="retryBtn">Try again</button>
+      </div>
+
+      <!-- Feed list -->
+      <div class="feed-container hidden" id="feedContainer">
+        <div class="feed-meta" id="feedMeta" aria-live="polite"></div>
+        <ul class="feed-list" id="feedList" role="list" aria-label="Release notes entries"></ul>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>Data sourced from <a href="https://cloud.google.com/bigquery/docs/release-notes" target="_blank" rel="noopener noreferrer">cloud.google.com</a></p>
+    </footer>
+  </div>
+
+  <!-- ── Tweet Modal ── -->
+  <div class="modal-overlay hidden" id="tweetModal" role="dialog" aria-modal="true" aria-labelledby="tweetModalTitle">
+    <div class="modal-panel">
+      <button class="modal-close" id="modalClose" aria-label="Close tweet dialog">&times;</button>
+
+      <div class="modal-header">
+        <div class="twitter-logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </div>
+        <h2 class="modal-title" id="tweetModalTitle">Compose Tweet</h2>
+      </div>
+
+      <div class="selected-note-preview" id="selectedNotePreview"></div>
+
+      <div class="tweet-compose">
+        <label for="tweetText" class="tweet-label">Your tweet</label>
+        <textarea
+          id="tweetText"
+          class="tweet-textarea"
+          rows="5"
+          maxlength="280"
+          placeholder="What do you want to say about this update?"
+          aria-describedby="charCount"
+        ></textarea>
+        <div class="tweet-footer">
+          <span class="char-count" id="charCount" aria-live="polite">
+            <span id="charUsed">0</span>/280
+          </span>
+          <button class="btn-tweet" id="sendTweetBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            Post on X
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
