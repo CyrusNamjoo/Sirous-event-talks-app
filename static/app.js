@@ -7,6 +7,10 @@
 
   // ── DOM refs ──────────────────────────────
   const refreshBtn      = document.getElementById("refreshBtn");
+  const themeToggleBtn  = document.getElementById("themeToggleBtn");
+  const exportCsvBtn    = document.getElementById("exportCsvBtn");
+  const sunIcon         = document.querySelector(".sun-icon");
+  const moonIcon        = document.querySelector(".moon-icon");
   const refreshLabel    = document.getElementById("refreshLabel");
   const loadingState    = document.getElementById("loadingState");
   const errorState      = document.getElementById("errorState");
@@ -124,6 +128,17 @@
             </svg>
             Tweet this
           </button>
+          <button
+            class="btn-copy"
+            aria-label="Copy to clipboard"
+            data-idx="${idx}"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span class="copy-label">Copy</span>
+          </button>
         </div>
       `;
 
@@ -145,6 +160,22 @@
       card.querySelector(".btn-select-tweet").addEventListener("click", (e) => {
         e.stopPropagation();
         openTweetModal(entry);
+      });
+
+      // Copy to clipboard button
+      card.querySelector(".btn-copy").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const textToCopy = `${entry.title}\n${cleanSummary}\n${entry.link}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const btn = e.currentTarget;
+          const label = btn.querySelector(".copy-label");
+          btn.classList.add("copied");
+          label.textContent = "Copied!";
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            label.textContent = "Copy";
+          }, 2000);
+        });
       });
 
       li.appendChild(card);
@@ -256,8 +287,52 @@
     closeTweetModal();
   }
 
+  // ── CSV Export ────────────────────────────
+  function exportToCsv() {
+    if (!currentEntries.length) return;
+    
+    // Headers
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "ID,Title,Date,Link,Summary\n";
+
+    currentEntries.forEach(entry => {
+      const id = `"${escapeCsv(entry.id)}"`;
+      const title = `"${escapeCsv(entry.title)}"`;
+      const date = `"${escapeCsv(entry.updated)}"`;
+      const link = `"${escapeCsv(entry.link)}"`;
+      const summary = `"${escapeCsv(stripHtml(entry.summary))}"`;
+      csvContent += `${id},${title},${date},${link},${summary}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "bigquery-release-notes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function escapeCsv(str) {
+    return String(str).replace(/"/g, '""');
+  }
+
+  // ── Theme Toggle ──────────────────────────
+  function toggleTheme() {
+    const isLight = document.documentElement.classList.toggle("light-mode");
+    if (isLight) {
+      sunIcon.classList.add("hidden");
+      moonIcon.classList.remove("hidden");
+    } else {
+      sunIcon.classList.remove("hidden");
+      moonIcon.classList.add("hidden");
+    }
+  }
+
   // ── Event listeners ───────────────────────
   refreshBtn.addEventListener("click", fetchNotes);
+  themeToggleBtn.addEventListener("click", toggleTheme);
+  exportCsvBtn.addEventListener("click", exportToCsv);
   retryBtn.addEventListener("click", fetchNotes);
   modalClose.addEventListener("click", closeTweetModal);
   sendTweetBtn.addEventListener("click", postTweet);
